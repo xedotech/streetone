@@ -1,25 +1,29 @@
 # Street One
 
-Free, open-source game. Play the street. Fund the city.
+Free MIT-licensed Lagos demo you can play in the browser.
 
-**Play:** [streetone.vercel.app](https://streetone.vercel.app)  
-**Source:** [github.com/xedotech/streetone](https://github.com/xedotech/streetone)
+- Play: https://streetone.grok.me/play
+- Campaign / donate: https://streetone.grok.me
+- Source zips: https://streetone.grok.me/source
+- GitHub: https://github.com/xedotech/streetone
 
-- Play in the browser: `/play`
-- Canonical engine: [`godot/`](godot/)
-- Open fund: donations via Bachs, MIT, community-owned
+## Trees
 
-## Play locally
+- `public/city/` — playable WebGL Lagos demo
+- `public/godot/` — smaller Godot 4 street slice (separate prototype)
+- `src/` — campaign site (TanStack Start)
+
+## Run campaign
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `/play`. W throttle, S brake, **A left / D right**, F enter/exit, Space fire.
+Open `/` or `/play`. Do not commit `BACHS_API_KEY`.
 
-Godot: import `godot/` in Godot 4.3+ and press F5.
+## Run city only
 
-## Donate
-
-The game is free. Donations are optional. Set server-only `BACHS_API_KEY` on the host (Vercel env) to collect through Bachs. Never commit the key.
+```bash
+npx serve public/city
+```
