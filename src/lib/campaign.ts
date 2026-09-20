@@ -40,14 +40,47 @@ function bachsBase(key: string) {
     : process.env.BACHS_API_BASE?.trim() || "https://sandbox-api.bachs.io";
 }
 
+function readEnv(name: string): string {
+  const fromProcess =
+    typeof process !== "undefined" && process.env
+      ? process.env[name]
+      : undefined;
+  // Vinxi / Vite SSR sometimes surfaces server secrets here
+  const meta = (import.meta as { env?: Record<string, string | undefined> }).env;
+  const fromMeta = meta?.[name];
+  const raw = fromProcess || fromMeta || "";
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
 function bachsKey() {
   return (
-    process.env.BACHS_API_KEY?.trim() ||
-    process.env.BACHS_KEY?.trim() ||
-    process.env.BACHS_SECRET_KEY?.trim() ||
-    process.env.BACHS_SECRET?.trim() ||
+    readEnv("BACHS_API_KEY") ||
+    readEnv("BACHS_KEY") ||
+    readEnv("BACHS_SECRET_KEY") ||
+    readEnv("BACHS_SECRET") ||
+    readEnv("BACHS_TOKEN") ||
+    readEnv("BACHS_LIVE_KEY") ||
     ""
   );
+}
+
+function bachsKeyProbe(): string {
+  const names = [
+    "BACHS_API_KEY",
+    "BACHS_KEY",
+    "BACHS_SECRET_KEY",
+    "BACHS_SECRET",
+    "BACHS_TOKEN",
+    "BACHS_LIVE_KEY",
+  ];
+  const present = names.filter((n) => Boolean(readEnv(n)));
+  // Also note any env key that looks Bachs-related (names only, never values)
+  const allKeys =
+    typeof process !== "undefined" && process.env
+      ? Object.keys(process.env)
+      : [];
+  const related = allKeys.filter((k) => /bachs/i.test(k));
+  return `present=[${present.join(",") || "none"}] related=[${related.join(",") || "none"}]`;
 }
 
 function publicOrigin(requestOrigin: string) {
@@ -173,7 +206,7 @@ export const startPledge = createServerFn({ method: "POST" })
       return {
         ok: false as const,
         reason: "not_configured" as const,
-        message: "Bachs API key missing on server",
+        message: `Bachs API key missing on server (${bachsKeyProbe()})`,
       };
     }
 
