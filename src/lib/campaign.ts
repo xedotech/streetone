@@ -20,7 +20,6 @@ export type TierId = keyof typeof TIERS;
 
 export const GOAL_CENTS = 2_500_000;
 
-/** Open fund (custom amount) — verified live product */
 const OPEN_FUND_ID =
   process.env.BACHS_PRODUCT_ID?.trim() || "prod_830a5ed9b2bf4bd7adce";
 const SPARK_ID =
@@ -85,13 +84,13 @@ function productForTier(tier: string): { productId: string; customAmount: boolea
   if (tier === "walker") return { productId: SPARK_ID, customAmount: false };
   if (tier === "driver") return { productId: BLOCK_ID, customAmount: false };
   if (tier === "producer") return { productId: FOUNDRY_ID, customAmount: false };
-  // captain + custom → open fund with amount
   return { productId: OPEN_FUND_ID, customAmount: true };
 }
 
 type BachsCheckoutPayload = {
   checkout_id?: string;
   checkout_url?: string;
+  checkoutUrl?: string;
   url?: string;
   error?: { message?: string };
   detail?: string;
@@ -99,7 +98,7 @@ type BachsCheckoutPayload = {
 };
 
 function pickCheckoutUrl(payload: BachsCheckoutPayload): string | undefined {
-  const raw = payload.checkout_url || payload.url;
+  const raw = payload.checkout_url || payload.checkoutUrl || payload.url;
   return typeof raw === "string" && raw.startsWith("http") ? raw : undefined;
 }
 
@@ -116,12 +115,11 @@ async function resolveOrigin(): Promise<string> {
       );
     }
   } catch {
-    /* Grok/runtime may not expose getRequestUrl — never throw */
+    /* ignore */
   }
   return publicOrigin(fallback);
 }
 
-/** Live client reads raisedCents / backers / goalCents / bachsReady */
 export const getCampaign = createServerFn({ method: "GET" }).handler(async () => {
   const ready = Boolean(bachsKey());
   return {
@@ -143,7 +141,11 @@ export const startPledge = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const key = bachsKey();
     if (!key) {
-      return { ok: false as const, reason: "not_configured" as const };
+      return {
+        ok: false as const,
+        reason: "not_configured" as const,
+        message: "Bachs API key missing on server",
+      };
     }
 
     const amount = (data.amountCents / 100).toFixed(2);
